@@ -6,7 +6,7 @@
 #    By: krchuaip <krittin@42bangkok.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/09/20 01:45:03 by krchuaip          #+#    #+#              #
-#    Updated: 2024/09/30 22:03:21 by krchuaip         ###   ########.fr        #
+#    Updated: 2024/09/30 23:42:04 by krchuaip         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -24,8 +24,11 @@ db-down:
 	docker compose down
 
 nuke-db:
+	python weather_app/manage.py flush
+	python weather_app/manage.py sqlflush | python weather_app/manage.py dbshell
 	docker compose down
 	docker volume rm weatherapp_postgres_prod_data
+	docker compose up -d
 
 install:
 	pip install -r requirements.txt

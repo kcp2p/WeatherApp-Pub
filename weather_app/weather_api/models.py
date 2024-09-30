@@ -4,7 +4,7 @@ from django.db import models
 from django.utils import timezone
 
 class CustomUserManager(BaseUserManager):
-    def create_user(self, email, display_name, password, **extra_fields):
+    def create_user(self, email, display_name, password, preferred_temperature_unit, preferred_wind_speed_unit, **extra_fields):
         if not email:
             raise ValueError("Users must have an email address")
         if not display_name:
@@ -14,6 +14,8 @@ class CustomUserManager(BaseUserManager):
         user = self.model(
             email=self.normalize_email(email),
             display_name=display_name,
+            preferred_temperature_unit=preferred_temperature_unit,
+            preferred_wind_speed_unit=preferred_wind_speed_unit,
             **extra_fields,
         )
         user.set_password(password)
@@ -41,8 +43,8 @@ class CustomUser(AbstractUser):
     created_at = models.DateTimeField(default=timezone.now)
 
     # Custom fields
-    preferred_temperature_unit = models.CharField(max_length=10, default="Celsius")
-    preferred_wind_speed_unit = models.CharField(max_length=10, default="km/h")
+    preferred_temperature_unit = models.IntegerField(default=0, help_text="0: Celsius, 1: Fahrenheit")
+    preferred_wind_speed_unit = models.IntegerField(default=0, help_text="0: km/h, 1: knots")
 
     # Override the default manager
     objects = CustomUserManager()

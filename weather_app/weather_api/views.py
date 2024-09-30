@@ -4,7 +4,7 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from .models import CustomUser, LocationHistory, WeatherCache, APIRequestLog, Token
 from .serializers import WeatherCacheSerializer, TokenSerializer, CustomUserSerializer
 from django.conf import settings
@@ -35,6 +35,8 @@ def mail_template(content, button_url, button_text):
 
 
 @api_view(['POST'])
+@authentication_classes([])
+@permission_classes([])
 def reset_password(request, format=None):
     user_id = request.data["id"]
     token = request.data["token"]
@@ -84,6 +86,8 @@ def reset_password(request, format=None):
 
 
 @api_view(['POST'])
+@authentication_classes([])
+@permission_classes([])
 def forgot_password(request, format=None):
     email = request.data["email"]
     user = CustomUser.objects.get(email=email)
@@ -138,10 +142,32 @@ def forgot_password(request, format=None):
 
 
 @api_view(['POST'])
+@authentication_classes([])
+@permission_classes([])
 def registration(request, format=None):
     email = request.data["email"]
     password = request.data["password"]
     display_name = request.data["display_name"]
+    preferred_temperature_unit = request.data["preferred_temperature_unit"]
+    preferred_wind_speed_unit = request.data["preferred_wind_speed_unit"]
+    
+    if len(password) < 8:
+        return Response(
+            {"success": False, "message": "Password must be at least 8 characters long."},
+            status=status.HTTP_200_OK,
+        )
+    
+    if preferred_temperature_unit not in [0, 1]:
+        return Response(
+            {"success": False, "message": "Invalid preferred temperature unit."},
+            status=status.HTTP_200_OK,
+        )
+    
+    if preferred_wind_speed_unit not in [0, 1]:
+        return Response(
+            {"success": False, "message": "Invalid preferred wind speed unit."},
+            status=status.HTTP_200_OK,
+        )
     
     # Check if email already exists
     if CustomUser.objects.filter(email=email).exists():
@@ -150,7 +176,7 @@ def registration(request, format=None):
             status=status.HTTP_200_OK,
         )
     
-    user = CustomUser.objects.create_user(email=email, password=password, display_name=display_name)
+    user = CustomUser.objects.create_user(email=email, password=password, display_name=display_name, preferred_temperature_unit=preferred_temperature_unit, preferred_wind_speed_unit=preferred_wind_speed_unit)
     if user:
         return Response(
             {"success": True, "message": "You are now registered on our website!"},
@@ -164,6 +190,8 @@ def registration(request, format=None):
 
 
 @api_view(['POST'])
+@authentication_classes([])
+@permission_classes([])
 def login(request, format=None):
     email = request.data["email"]
     password = request.data["password"]
