@@ -2,6 +2,7 @@
 from django.urls import path
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 from . import views
+from rest_framework.authtoken import views as auth_views
 
 urlpatterns = [
     path('weather/<str:city_name>', views.get_weather, name='get_weather'),
@@ -13,4 +14,9 @@ urlpatterns = [
     path('schema/', SpectacularAPIView.as_view(), name='schema'),
     path('schema/swagger-ui/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     path('schema/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
+    path("register", views.registration, name="register"),
+    path("login", views.login, name="login"),
+    path("forgotPassword", views.forgot_password, name="forgotPassword"),
+    path("resetPassword", views.reset_password, name="resetPassword"),
+    path('token/', auth_views.obtain_auth_token, name='token'),
 ]

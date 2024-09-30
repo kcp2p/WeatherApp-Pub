@@ -1,11 +1,23 @@
 # weather_api/admin.py
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser, LocationHistory, WeatherCache, UserSavedCity
+from .models import CustomUser, LocationHistory, WeatherCache, UserSavedCity, Token
 
 class CustomUserAdmin(UserAdmin):
     model = CustomUser
-    list_display = ['email', 'preferred_temperature_unit', 'preferred_wind_speed_unit']
+    list_display = ['email', 'display_name', 'password', 'preferred_temperature_unit', 'preferred_wind_speed_unit']
+    add_fieldsets = (
+        (None, {
+            'fields': ('email', 'display_name', 'password', 'preferred_temperature_unit', 'preferred_wind_speed_unit'),
+        }),
+    )
+    fieldsets = (
+        (None, {
+            'fields': ('email', 'display_name', 'password', 'preferred_temperature_unit', 'preferred_wind_speed_unit'),
+        }),
+    )
+    search_fields = ('email', 'first_name', 'last_name')
+    ordering = ('email',)
 
 admin.site.register(CustomUser, CustomUserAdmin)
 
@@ -26,3 +38,5 @@ class UserSavedCityAdmin(admin.ModelAdmin):
     list_display = ['user', 'city_name', 'saved_at']
 
 admin.site.register(UserSavedCity, UserSavedCityAdmin)
+
+admin.site.register(Token)

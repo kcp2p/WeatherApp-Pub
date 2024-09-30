@@ -4,9 +4,13 @@ from django.db import models
 from django.utils import timezone
 
 class CustomUserManager(BaseUserManager):
-    def create_user(self, email, display_name, password=None, **extra_fields):
+    def create_user(self, email, display_name, password, **extra_fields):
         if not email:
             raise ValueError("Users must have an email address")
+        if not display_name:
+            raise ValueError("Users must have a display name")
+        if not password:
+            raise ValueError("Users must have a password")
         user = self.model(
             email=self.normalize_email(email),
             display_name=display_name,
@@ -31,6 +35,7 @@ class CustomUserManager(BaseUserManager):
         return self.create_user(email, display_name, password, **extra_fields)
 
 class CustomUser(AbstractUser):
+    username = None
     email = models.EmailField(unique=True)
     display_name = models.CharField(max_length=150, default="Display Name")
     created_at = models.DateTimeField(default=timezone.now)
@@ -85,3 +90,12 @@ class UserSavedCity(models.Model):
     latitude = models.FloatField()
     longitude = models.FloatField()
     saved_at = models.DateTimeField(auto_now_add=True)
+
+# Token model for authentication
+class Token(models.Model):
+    id = models.AutoField(primary_key=True)
+    token = models.CharField(max_length=255)
+    created_at = models.DateTimeField()
+    user_id = models.IntegerField()
+    expires_at = models.DateTimeField()
+    is_used = models.BooleanField(default=False)

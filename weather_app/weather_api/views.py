@@ -3,10 +3,184 @@ import requests
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.decorators import api_view
-from .models import CustomUser, LocationHistory, WeatherCache, APIRequestLog
-from .serializers import WeatherCacheSerializer
-from weather_app.settings import OPENWEATHER_API_KEY
+from .models import CustomUser, LocationHistory, WeatherCache, APIRequestLog, Token
+from .serializers import WeatherCacheSerializer, TokenSerializer, CustomUserSerializer
+from django.conf import settings
+from django.core.mail import send_mail
+import uuid
+import hashlib
+from django.contrib.auth import authenticate
+from django.contrib.auth.hashers import check_password
+
+def mail_template(content, button_url, button_text):
+    return f"""<!DOCTYPE html>
+            <html>
+            <body style="text-align: center; font-family: "Verdana", serif; color: #000;">
+                <div style="max-width: 600px; margin: 10px; background-color: #fafafa; padding: 25px; border-radius: 20px;">
+                <p style="text-align: left;">{content}</p>
+                <a href="{button_url}" target="_blank">
+                    <button style="background-color: #444394; border: 0; width: 200px; height: 30px; border-radius: 6px; color: #fff;">{button_text}</button>
+                </a>
+                <p style="text-align: left;">
+                    If you are unable to click the above button, copy paste the below URL into your address bar
+                </p>
+                <a href="{button_url}" target="_blank">
+                    <p style="margin: 0px; text-align: left; font-size: 10px; text-decoration: none;">{button_url}</p>
+                </a>
+                </div>
+            </body>
+            </html>"""
+
+
+@api_view(['POST'])
+def reset_password(request, format=None):
+    user_id = request.data["id"]
+    token = request.data["token"]
+    password = request.data["password"]
+
+    token_obj = Token.objects.filter(
+        user_id=user_id).order_by("-created_at")[0]
+    if token_obj.expires_at < timezone.now():
+        return Response(
+            {
+                "success": False,
+                "message": "Password Reset Link has expired!",
+            },
+            status=status.HTTP_200_OK,
+        )
+    elif token_obj is None or token != token_obj.token or token_obj.is_used:
+        return Response(
+            {
+                "success": False,
+                "message": "Reset Password link is invalid!",
+            },
+            status=status.HTTP_200_OK,
+        )
+    else:
+        token_obj.is_used = True
+        try:
+            user = CustomUser.objects.get(id=user_id)
+        except CustomUser.DoesNotExist:
+            return Response(
+            {
+                "success": False,
+                "message": "User does not exist!",
+            },
+            status=status.HTTP_200_OK,
+            )
+        
+        user.set_password(password)
+        user.save()
+        token_obj.save()
+        return Response(
+            {
+            "success": True,
+            "message": "Your password reset was successful!",
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+@api_view(['POST'])
+def forgot_password(request, format=None):
+    email = request.data["email"]
+    user = CustomUser.objects.get(email=email)
+    created_at = timezone.now()
+    expires_at = timezone.now() + timezone.timedelta(1)
+    salt = uuid.uuid4().hex
+    token = hashlib.sha512(
+        (str(user.id) + user.password + created_at.isoformat() + salt).encode(
+            "utf-8"
+        )
+    ).hexdigest()
+    token_obj = {
+        "token": token,
+        "created_at": created_at,
+        "expires_at": expires_at,
+        "user_id": user.id,
+    }
+    serializer = TokenSerializer(data=token_obj)
+    if serializer.is_valid():
+        serializer.save()
+        subject = "Forgot Password Link"
+        content = mail_template(
+            "We have received a request to reset your password. Please reset your password using the link below.",
+            f"{settings.BACKEND_URL}/resetPassword?id={user.id}&token={token}",
+            "Reset Password",
+        )
+        send_mail(
+            subject=subject,
+            message=content,
+            from_email=settings.EMAIL_HOST_USER,
+            recipient_list=[email],
+            html_message=content,
+        )
+        return Response(
+            {
+                "success": True,
+                "message": "A password reset link has been sent to your email.",
+            },
+            status=status.HTTP_200_OK,
+        )
+    else:
+        error_msg = ""
+        for key in serializer.errors:
+            error_msg += serializer.errors[key][0]
+        return Response(
+            {
+                "success": False,
+                "message": error_msg,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+@api_view(['POST'])
+def registration(request, format=None):
+    email = request.data["email"]
+    password = request.data["password"]
+    display_name = request.data["display_name"]
+    
+    # Check if email already exists
+    if CustomUser.objects.filter(email=email).exists():
+        return Response(
+            {"success": False, "message": "Email already exists."},
+            status=status.HTTP_200_OK,
+        )
+    
+    user = CustomUser.objects.create_user(email=email, password=password, display_name=display_name)
+    if user:
+        return Response(
+            {"success": True, "message": "You are now registered on our website!"},
+            status=status.HTTP_200_OK,
+        )
+    else:
+        return Response(
+            {"success": False, "message": "Registration failed."},
+            status=status.HTTP_200_OK,
+        )
+
+
+@api_view(['POST'])
+def login(request, format=None):
+    email = request.data["email"]
+    password = request.data["password"]
+    user = authenticate(request, email=email, password=password)
+    if user is None or not check_password(password, user.password):
+        return Response(
+            {
+                "success": False,
+                "message": "Invalid Login Credentials!",
+            },
+            status=status.HTTP_200_OK,
+        )
+    else:
+        return Response(
+            {"success": True, "message": "You are now logged in!"},
+            status=status.HTTP_200_OK,
+        )
 
 @api_view(['GET'])
 def get_weather(request, city_name):
@@ -25,7 +199,7 @@ def get_weather(request, city_name):
 
     # Cache is either expired or doesn't exist, so we fetch new data
     # Fetch geo-coordinates for the given city
-    geo_url = f"http://api.openweathermap.org/geo/1.0/direct?q={city_name}&appid={OPENWEATHER_API_KEY}".replace(' ', '%20')
+    geo_url = f"http://api.openweathermap.org/geo/1.0/direct?q={city_name}&appid={settings.OPENWEATHER_API_KEY}".replace(' ', '%20')
     geo_response = requests.get(geo_url).json()
 
     if not geo_response or city_name == '' or len(city_name) > 99:

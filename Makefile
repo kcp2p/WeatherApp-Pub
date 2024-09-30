@@ -6,9 +6,13 @@
 #    By: krchuaip <krittin@42bangkok.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/09/20 01:45:03 by krchuaip          #+#    #+#              #
-#    Updated: 2024/09/20 01:48:01 by krchuaip         ###   ########.fr        #
+#    Updated: 2024/09/30 22:03:21 by krchuaip         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
+
+#!make
+include .env
+export $(shell sed 's/=.*//' .env)
 
 venv:
 	python -m venv env
