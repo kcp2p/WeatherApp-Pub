@@ -4,7 +4,7 @@ from django.db import models
 from django.utils import timezone
 
 class CustomUserManager(BaseUserManager):
-    def create_user(self, email, display_name, password, preferred_temperature_unit, preferred_wind_speed_unit, **extra_fields):
+    def create_user(self, email, display_name, password, preferred_temperature_unit=0, preferred_wind_speed_unit=0, **extra_fields):
         if not email:
             raise ValueError("Users must have an email address")
         if not display_name:
@@ -48,7 +48,6 @@ class CustomUser(AbstractUser):
 
     # Override the default manager
     objects = CustomUserManager()
-
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["display_name"]

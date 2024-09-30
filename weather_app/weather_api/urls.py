@@ -6,9 +6,8 @@ from rest_framework.authtoken import views as auth_views
 
 urlpatterns = [
     path('weather/<str:city_name>', views.get_weather, name='get_weather'),
-    # path('location-history/', views.get_location_history, name='get_location_history'),
-    # path('api-logs/', views.get_api_logs, name='get_api_logs'),
-    # Method delete for weather/cache
+    path('location-history/', views.get_location_history, name='get_location_history'),
+    path('api-logs/', views.get_api_logs, name='get_api_logs'),
     path('weather/cache/', views.delete_all_cache, name='delete_all_cache'),
     path('weather/cache/<str:city_name>', views.delete_all_city_cache, name='delete_all_city_cache'),
     path('schema/', SpectacularAPIView.as_view(), name='schema'),

@@ -5,6 +5,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
+from rest_framework.permissions import IsAdminUser
 from .models import CustomUser, LocationHistory, WeatherCache, APIRequestLog, Token
 from .serializers import WeatherCacheSerializer, TokenSerializer, CustomUserSerializer
 from django.conf import settings
@@ -213,7 +214,7 @@ def login(request, format=None):
 @api_view(['GET'])
 def get_weather(request, city_name):
     # Authenticate user (temporarily hardcoded, replace with actual authentication)
-    user = CustomUser.objects.get(email="krittin@42bangkok.com")
+    user = request.user
 
     # Remove all expired cache entries
     WeatherCache.objects.filter(expiry_time__lt=timezone.now()).delete()
@@ -223,7 +224,27 @@ def get_weather(request, city_name):
     
     if cache:
         # If cache is valid, return cached data
-        return Response(WeatherCacheSerializer(cache).data)
+        weather_response = WeatherCacheSerializer(cache).data
+
+        # Check if location history exists for the user and city
+        location_history = LocationHistory.objects.filter(user=user, city_name=city_name).first()
+
+        if location_history:
+            # Delete the old location history
+            location_history.delete()
+
+        # Create a new location history
+        LocationHistory.objects.create(user=user, city_name=city_name, latitude=weather_response['latitude'], longitude=weather_response['longitude'])
+
+        # Log the API request details
+        APIRequestLog.objects.create(
+            user=user,
+            city_name=city_name,
+            request_url="Cache hit",
+            response_status=200,  # Assuming success as the response code
+            response_data=weather_response,
+        )
+        return Response(weather_response)
 
     # Cache is either expired or doesn't exist, so we fetch new data
     # Fetch geo-coordinates for the given city
@@ -255,9 +276,16 @@ def get_weather(request, city_name):
         expiry_time=timezone.now() + timezone.timedelta(hours=1),
     )
 
-    # Log the search history for the user
-    LocationHistory.objects.create(user=user, city_name=city_name, latitude=lat, longitude=lon)
+    # Check if location history exists for the user and city
+    location_history = LocationHistory.objects.filter(user=user, city_name=city_name).first()
 
+    if location_history:
+        # Delete the old location history
+        location_history.delete()
+
+    # Create a new location history
+    LocationHistory.objects.create(user=user, city_name=city_name, latitude=lat, longitude=lon)
+    
     # Log the API request details
     APIRequestLog.objects.create(
         user=user,
@@ -271,13 +299,37 @@ def get_weather(request, city_name):
     return Response(weather_response)
 
 @api_view(['DELETE'])
+@permission_classes([IsAdminUser])
 def delete_all_cache(request):
     WeatherCache.objects.all().delete()
 
     return Response({'message': 'Cache cleared'})
 
 @api_view(['DELETE'])
+@permission_classes([IsAdminUser])
 def delete_all_city_cache(request, city_name):
     WeatherCache.objects.filter(city_name=city_name).delete()
 
     return Response({'message': f'Cache for {city_name} cleared'})
+
+# View to get the location history of the user
+@api_view(['GET'])
+def get_location_history(request):
+    user = request.user
+    location_history = LocationHistory.objects.filter(user=user).order_by('-search_time')
+    return Response([{'city_name': loc.city_name, 'search_time': loc.search_time} for loc in location_history])
+
+# View to get the API logs
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+def get_api_logs(request):
+    api_logs = APIRequestLog.objects.all().order_by('-request_time')
+    return Response([{
+        'user': log.user.email,
+        'city_name': log.city_name,
+        'request_time': log.request_time,
+        'request_url': log.request_url,
+        'response_status': log.response_status,
+        'response_data': log.response_data,
+    } for log in api_logs])
+
