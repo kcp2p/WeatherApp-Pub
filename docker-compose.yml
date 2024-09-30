@@ -1,0 +1,23 @@
+services:
+  db:
+    image: postgres:16.4-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - POSTGRES_DB
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+    env_file:
+      - ./.env
+    networks:
+      - api-network
+
+networks:
+  ingress-network:
+    external: true
+  api-network:
+
+volumes:
+  postgres_prod_data:
