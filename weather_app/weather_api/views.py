@@ -5,9 +5,9 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
-from rest_framework.permissions import IsAdminUser
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from .models import CustomUser, LocationHistory, WeatherCache, APIRequestLog, Token
-from .serializers import WeatherCacheSerializer, TokenSerializer, CustomUserSerializer
+from .serializers import WeatherCacheSerializer, TokenSerializer, LocationHistorySerializer
 from django.conf import settings
 from django.core.mail import send_mail
 import uuid
@@ -295,6 +295,10 @@ def get_weather(request, city_name):
         response_data=weather_response,
     )
 
+    # Return from cached
+    cache = WeatherCache.objects.filter(city_name=city_name, expiry_time__gt=timezone.now()).first()
+    weather_response = WeatherCacheSerializer(cache).data
+
     # Return the fetched weather data
     return Response(weather_response)
 
@@ -333,3 +337,10 @@ def get_api_logs(request):
         'response_data': log.response_data,
     } for log in api_logs])
 
+@api_view(['GET'])
+def get_user_search_history(request):
+    user = request.user
+    # Get the search history for the authenticated user, ordered by the most recent searches first
+    search_history = LocationHistory.objects.filter(user=user).order_by('-search_time')
+    serializer = LocationHistorySerializer(search_history, many=True)
+    return Response(serializer.data)

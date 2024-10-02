@@ -10,7 +10,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
 class LocationHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = LocationHistory
-        fields = ['city_name', 'latitude', 'longitude', 'search_time']
+        fields = ['id', 'city_name', 'latitude', 'longitude', 'search_time']
 
 class WeatherCacheSerializer(serializers.ModelSerializer):
     class Meta:

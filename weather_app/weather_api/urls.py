@@ -18,4 +18,5 @@ urlpatterns = [
     path("forgotPassword", views.forgot_password, name="forgotPassword"),
     path("resetPassword", views.reset_password, name="resetPassword"),
     path('token/', auth_views.obtain_auth_token, name='token'),
+    path('search-history/', views.get_user_search_history, name='user-search-history'),
 ]
