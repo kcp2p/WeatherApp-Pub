@@ -7,13 +7,14 @@ from rest_framework.views import APIView
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from .models import CustomUser, LocationHistory, WeatherCache, APIRequestLog, Token
-from .serializers import WeatherCacheSerializer, TokenSerializer, LocationHistorySerializer
+from .serializers import CustomUserSerializer, WeatherCacheSerializer, TokenSerializer, LocationHistorySerializer
 from django.conf import settings
 from django.core.mail import send_mail
 import uuid
 import hashlib
 from django.contrib.auth import authenticate
 from django.contrib.auth.hashers import check_password
+import json
 
 def mail_template(content, button_url, button_text):
     return f"""<!DOCTYPE html>
@@ -146,11 +147,17 @@ def forgot_password(request, format=None):
 @authentication_classes([])
 @permission_classes([])
 def registration(request, format=None):
-    email = request.data["email"]
-    password = request.data["password"]
-    display_name = request.data["display_name"]
-    preferred_temperature_unit = request.data["preferred_temperature_unit"]
-    preferred_wind_speed_unit = request.data["preferred_wind_speed_unit"]
+    try:
+        email = request.data["email"]
+        password = request.data["password"]
+        display_name = request.data["display_name"]
+        preferred_temperature_unit = request.data["preferred_temperature_unit"]
+        preferred_wind_speed_unit = request.data["preferred_wind_speed_unit"]
+    except KeyError:
+        return Response(
+            {"success": False, "message": "Missing required fields."},
+            status=status.HTTP_200_OK,
+        )
     
     if len(password) < 8:
         return Response(
@@ -344,3 +351,46 @@ def delete_search_history(request, id):
         return Response({"success": False, "message": "Search history entry not found."}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
         return Response({"success": False, "message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET', 'PATCH', 'PUT'])
+def user_info(request):
+    user = request.user
+
+    # Handle GET request to retrieve user information
+    if request.method == 'GET':
+        serializer = CustomUserSerializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    # Handle PATCH request to update user information
+    elif request.method in ['PATCH', 'PUT']:
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return Response({"error": "Invalid data"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Update user object directly
+        if 'display_name' in data:
+            user.display_name = data['display_name']
+
+        if 'preferred_temperature_unit' in data:
+            if data['preferred_temperature_unit'] in [0, 1]:
+                user.preferred_temperature_unit = data['preferred_temperature_unit']
+            else:
+                return Response({"error": "Invalid value for preferred_temperature_unit"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if 'preferred_wind_speed_unit' in data:
+            if data['preferred_wind_speed_unit'] in [0, 1]:
+                user.preferred_wind_speed_unit = data['preferred_wind_speed_unit']
+            else:
+                return Response({"error": "Invalid value for preferred_wind_speed_unit"}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if 'password' in data:
+            if len(data['password']) >= 8:
+                user.set_password(data['password'])
+            else:
+                return Response({"error": "Password must be at least 8 characters long."}, status=status.HTTP_400_BAD_REQUEST)
+
+        user.save()
+
+        updated_serializer = CustomUserSerializer(user)
+        return Response(updated_serializer.data, status=status.HTTP_200_OK)
