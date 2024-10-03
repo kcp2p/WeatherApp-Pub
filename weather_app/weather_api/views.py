@@ -189,28 +189,6 @@ def registration(request, format=None):
             status=status.HTTP_200_OK,
         )
 
-
-@api_view(['POST'])
-@authentication_classes([])
-@permission_classes([])
-def login(request, format=None):
-    email = request.data["email"]
-    password = request.data["password"]
-    user = authenticate(request, email=email, password=password)
-    if user is None or not check_password(password, user.password):
-        return Response(
-            {
-                "success": False,
-                "message": "Invalid Login Credentials!",
-            },
-            status=status.HTTP_200_OK,
-        )
-    else:
-        return Response(
-            {"success": True, "message": "You are now logged in!"},
-            status=status.HTTP_200_OK,
-        )
-
 @api_view(['GET'])
 def get_weather(request, city_name):
     # Authenticate user (temporarily hardcoded, replace with actual authentication)
@@ -355,11 +333,11 @@ def delete_user_account(request):
         return Response({"success": False, "message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['DELETE'])
-def delete_search_history(request, history_id):
+def delete_search_history(request, id):
     user = request.user
     try:
         # Filter by authenticated user and specific search history ID
-        history_entry = LocationHistory.objects.get(id=history_id, user=user)
+        history_entry = LocationHistory.objects.get(id=id, user=user)
         history_entry.delete()
         return Response({"success": True, "message": "Search history entry deleted successfully."}, status=status.HTTP_200_OK)
     except LocationHistory.DoesNotExist:
