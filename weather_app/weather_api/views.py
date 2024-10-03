@@ -344,3 +344,25 @@ def get_user_search_history(request):
     search_history = LocationHistory.objects.filter(user=user).order_by('-search_time')
     serializer = LocationHistorySerializer(search_history, many=True)
     return Response(serializer.data)
+
+@api_view(['DELETE'])
+def delete_user_account(request):
+    user = request.user
+    try:
+        user.delete()
+        return Response({"success": True, "message": "User account deleted successfully."}, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({"success": False, "message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['DELETE'])
+def delete_search_history(request, history_id):
+    user = request.user
+    try:
+        # Filter by authenticated user and specific search history ID
+        history_entry = LocationHistory.objects.get(id=history_id, user=user)
+        history_entry.delete()
+        return Response({"success": True, "message": "Search history entry deleted successfully."}, status=status.HTTP_200_OK)
+    except LocationHistory.DoesNotExist:
+        return Response({"success": False, "message": "Search history entry not found."}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({"success": False, "message": str(e)}, status=status.HTTP_400_BAD_REQUEST)

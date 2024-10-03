@@ -19,4 +19,6 @@ urlpatterns = [
     path("resetPassword", views.reset_password, name="resetPassword"),
     path('token/', auth_views.obtain_auth_token, name='token'),
     path('search-history/', views.get_user_search_history, name='user-search-history'),
+    path('search-history/<int:id>', views.delete_search_history, name='delete-search-history'),
+    path('gdpr/', views.delete_user_account, name='gdpr-deletion'),
 ]
