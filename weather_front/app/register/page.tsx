@@ -1,152 +1,148 @@
 "use client";
 
-import React from 'react';
-import { useForm } from 'react-hook-form';
+import React, { useState } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
 
-interface RegisterForm {
-  email: string;
-  password: string;
-  confirm_password: string;
-  display_name: string;
-  preferred_temperature_unit: number; // 0 for Celsius, 1 for Fahrenheit
-  preferred_wind_speed_unit: number; // 0 for km/h, 1 for knots
-}
-
-interface RegisterResponse {
-  success: boolean;
-  message: string;
-}
-
-const Register: React.FC = () => {
-  const { register, handleSubmit, watch, formState: { errors } } = useForm<RegisterForm>();
+const RegisterPage: React.FC = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [preferredTemperature, setPreferredTemperature] = useState(0);
+  const [preferredWindSpeed, setPreferredWindSpeed] = useState(0);
+  const [rememberMe, setRememberMe] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-  
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL; // Get the backend URL
 
-  // Watching password and confirm_password to check if they match
-  const password = watch('password');
-  const confirmPassword = watch('confirm_password');
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 
-  const onSubmit = async (data: RegisterForm) => {
-    if (password !== confirmPassword) {
-      alert("Passwords do not match");
-      return;
-    }
-
+  const handleRegister = async () => {
+    setError(null);
     try {
-      const response = await axios.post<RegisterResponse>(`${backendUrl}/api/register`, {
-        email: data.email,
-        password: data.password,
-        display_name: data.display_name,
-        preferred_temperature_unit: Number(data.preferred_temperature_unit), // Ensure number type
-        preferred_wind_speed_unit: Number(data.preferred_wind_speed_unit), // Ensure number type
+      const response = await axios.post(`${backendUrl}/register`, {
+        email,
+        password,
+        preferred_temperature_unit: preferredTemperature,
+        preferred_wind_speed_unit: preferredWindSpeed,
       });
 
-      if (!response.data.success) {
-        // Handle the case where success is false
-        alert(response.data.message || 'Registration failed. Please try again.');
-        return;
+      if (response.data.success) {
+        alert('Registration successful! Please log in.');
+        router.push('/login');
+      } else {
+        setError(response.data.message);
       }
-
-      // If success is true, redirect to login page
-      alert(response.data.message);
-      router.push('/login'); // Redirect to login page after successful registration
-    } catch (error: any) {
-      alert(error.response?.data?.message || 'Registration failed due to an unexpected error');
+    } catch (error) {
+      setError('Registration failed. Please try again.');
     }
   };
 
   return (
-    <div className="container mx-auto max-w-lg p-8 mt-10 bg-white rounded-lg shadow-md">
-      <h2 className="text-2xl font-bold text-center mb-6">Register</h2>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div>
-          <input 
-            {...register('email', { required: true })} 
-            type="email" 
-            placeholder="Email" 
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          {errors.email && <p className="text-red-500 text-sm mt-1">Email is required</p>}
-        </div>
+    <div className="flex h-screen">
+      <div className="w-1/2 flex items-center justify-center bg-gray-100">
+        <div className="max-w-md w-full">
+          <img src="/logo.png" alt="Logo" className="mb-4" />
+          <h2 className="text-4xl font-bold text-gray-800 mb-4">Weather App</h2>
+          <p className="text-lg text-gray-600 mb-6">Please enter your information to register!</p>
+          
+          <div className="mb-4">
+            <label className="block text-gray-700">Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md"
+              placeholder="johndoe@gmail.com"
+            />
+          </div>
+          
+          <div className="mb-4">
+            <label className="block text-gray-700">Password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md"
+            />
+          </div>
 
-        <div>
-          <input 
-            {...register('password', { required: true, minLength: 8 })} 
-            type="password" 
-            placeholder="Password" 
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          {errors.password && (
-            <p className="text-red-500 text-sm mt-1">Password must be at least 8 characters long</p>
-          )}
-        </div>
+          <div className="mb-4">
+            <label className="block text-gray-700">Preferred Units</label>
+            <div className="flex gap-4">
+              <div>
+                <input
+                  type="radio"
+                  value={0}
+                  checked={preferredWindSpeed === 0}
+                  onChange={() => setPreferredWindSpeed(0)}
+                  className="mr-2"
+                />
+                km/h
+              </div>
+              <div>
+                <input
+                  type="radio"
+                  value={1}
+                  checked={preferredWindSpeed === 1}
+                  onChange={() => setPreferredWindSpeed(1)}
+                  className="mr-2"
+                />
+                knots
+              </div>
+            </div>
 
-        <div>
-          <input 
-            {...register('confirm_password', { required: true })} 
-            type="password" 
-            placeholder="Confirm Password" 
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          {errors.confirm_password && (
-            <p className="text-red-500 text-sm mt-1">Please confirm your password</p>
-          )}
-          {password !== confirmPassword && confirmPassword && (
-            <p className="text-red-500 text-sm mt-1">Passwords do not match</p>
-          )}
-        </div>
+            <div className="flex gap-4 mt-4">
+              <div>
+                <input
+                  type="radio"
+                  value={0}
+                  checked={preferredTemperature === 0}
+                  onChange={() => setPreferredTemperature(0)}
+                  className="mr-2"
+                />
+                °C
+              </div>
+              <div>
+                <input
+                  type="radio"
+                  value={1}
+                  checked={preferredTemperature === 1}
+                  onChange={() => setPreferredTemperature(1)}
+                  className="mr-2"
+                />
+                °F
+              </div>
+            </div>
+          </div>
 
-        <div>
-          <input 
-            {...register('display_name', { required: true })} 
-            placeholder="Display Name" 
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          {errors.display_name && (
-            <p className="text-red-500 text-sm mt-1">Display name is required</p>
-          )}
-        </div>
+          <div className="flex items-center mb-4">
+            <input
+              type="checkbox"
+              checked={rememberMe}
+              onChange={() => setRememberMe(!rememberMe)}
+              className="mr-2"
+            />
+            <label className="text-gray-700">Remember Me</label>
+          </div>
 
-        <div>
-          <label className="block text-gray-700 mb-2">Preferred Temperature Unit:</label>
-          <select 
-            {...register('preferred_temperature_unit', { required: true })}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          {error && <p className="text-red-500 mb-4">{error}</p>}
+
+          <button
+            onClick={handleRegister}
+            className="w-full py-2 px-4 bg-black text-white rounded-md hover:bg-gray-800 transition duration-300"
           >
-            <option value={0}>Celsius (°C)</option>
-            <option value={1}>Fahrenheit (°F)</option>
-          </select>
-          {errors.preferred_temperature_unit && (
-            <p className="text-red-500 text-sm mt-1">Please select a temperature unit</p>
-          )}
-        </div>
+            Register
+          </button>
 
-        <div>
-          <label className="block text-gray-700 mb-2">Preferred Wind Speed Unit:</label>
-          <select 
-            {...register('preferred_wind_speed_unit', { required: true })}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value={0}>km/h</option>
-            <option value={1}>knots</option>
-          </select>
-          {errors.preferred_wind_speed_unit && (
-            <p className="text-red-500 text-sm mt-1">Please select a wind speed unit</p>
-          )}
+          <p className="text-center mt-4">
+            Already have an account? <a href="/login" className="text-blue-600">Login Here.</a>
+          </p>
         </div>
-
-        <button 
-          type="submit"
-          className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-300"
-        >
-          Register
-        </button>
-      </form>
+      </div>
+      <div className="w-1/2 bg-cover bg-center" style={{ backgroundImage: 'url(/path/to/illustration.png)' }}>
+        {/* Illustration Area */}
+      </div>
     </div>
   );
 };
 
-export default Register;
+export default RegisterPage;

@@ -1,79 +1,102 @@
 "use client";
 
-import React from 'react';
-import { useForm } from 'react-hook-form';
+import React, { useState } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
 
-interface LoginForm {
-  email: string;
-  password: string;
-}
-
-interface TokenResponse {
-  token: string;
-}
-
-const Login: React.FC = () => {
-  const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>();
+const LoginPage: React.FC = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL; // Get the backend URL
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 
-  const onSubmit = async (data: LoginForm) => {
+  const handleLogin = async () => {
+    setError(null);
+
     try {
-      // Sending username instead of email in the payload as required by the API
-      const response = await axios.post<TokenResponse>(`${backendUrl}/api/token/`, {
-        username: data.email,
-        password: data.password,
+      const response = await axios.post(`${backendUrl}/token/`, {
+        username: email,
+        password,
       });
 
-      // If token is received, proceed to store it and navigate to the dashboard
       if (response.data.token) {
         localStorage.setItem('token', response.data.token);
-        alert('Login successful');
+        if (rememberMe) {
+          localStorage.setItem('rememberMe', 'true');
+        }
         router.push('/dashboard');
       } else {
-        alert('Login failed. Token not received.');
+        setError('Invalid login credentials. Please try again.');
       }
-    } catch (error: any) {
-      alert(error.response?.data?.message || 'Login failed due to an unexpected error');
+    } catch (error) {
+      setError('Login failed. Please check your credentials.');
     }
   };
 
   return (
-    <div className="container mx-auto max-w-lg p-8 mt-10 bg-white rounded-lg shadow-md">
-      <h2 className="text-2xl font-bold text-center mb-6">Login</h2>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div>
-          <input
-            {...register('email', { required: true })}
-            type="email"
-            placeholder="Email"
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          {errors.email && <p className="text-red-500 text-sm mt-1">Email is required</p>}
-        </div>
+    <div className="flex h-screen">
+      <div className="w-1/2 flex items-center justify-center bg-gray-100">
+        <div className="max-w-md w-full">
+          <img src="/logo.png" alt="Logo" className="mb-4" />
+          <h2 className="text-4xl font-bold text-gray-800 mb-4">Weather App</h2>
+          <p className="text-lg text-gray-600 mb-6">
+            Have an account? Please enter your login details to use this application!
+          </p>
 
-        <div>
-          <input
-            {...register('password', { required: true })}
-            type="password"
-            placeholder="Password"
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          {errors.password && <p className="text-red-500 text-sm mt-1">Password is required</p>}
-        </div>
+          <div className="mb-4">
+            <label className="block text-gray-700">Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md"
+              placeholder="johndoe@gmail.com"
+            />
+          </div>
 
-        <button
-          type="submit"
-          className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-300"
-        >
-          Login
-        </button>
-      </form>
+          <div className="mb-4 relative">
+            <label className="block text-gray-700">Password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md"
+              placeholder="Enter your password"
+            />
+          </div>
+
+          <div className="flex items-center mb-4">
+            <input
+              type="checkbox"
+              checked={rememberMe}
+              onChange={() => setRememberMe(!rememberMe)}
+              className="mr-2"
+            />
+            <label className="text-gray-700">Remember Me</label>
+          </div>
+
+          {error && <p className="text-red-500 mb-4">{error}</p>}
+
+          <button
+            onClick={handleLogin}
+            className="w-full py-2 px-4 bg-black text-white rounded-md hover:bg-gray-800 transition duration-300"
+          >
+            Login
+          </button>
+
+          <p className="text-center mt-4">
+            Don’t have an account? <a href="/register" className="text-blue-600">Register Here.</a>
+          </p>
+        </div>
+      </div>
+      <div className="w-1/2 bg-cover bg-center" style={{ backgroundImage: 'url(/path/to/illustration.png)' }}>
+        {/* Illustration Area */}
+      </div>
     </div>
   );
 };
 
-export default Login;
+export default LoginPage;
