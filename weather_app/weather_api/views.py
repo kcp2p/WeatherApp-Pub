@@ -394,3 +394,15 @@ def user_info(request):
 
         updated_serializer = CustomUserSerializer(user)
         return Response(updated_serializer.data, status=status.HTTP_200_OK)
+
+# Admin View to GET list of all users
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+def list_all_users(request):
+    # Get all users
+    users = CustomUser.objects.all()
+    
+    # Serialize the user data
+    serializer = CustomUserSerializer(users, many=True)
+    
+    return Response(serializer.data, status=status.HTTP_200_OK)
