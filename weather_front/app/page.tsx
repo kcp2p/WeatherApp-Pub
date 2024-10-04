@@ -1,101 +1,87 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import React from 'react';
+import { useRouter } from 'next/navigation';
+
+const LandingPage: React.FC = () => {
+  const router = useRouter();
+
+  const privateUrl = process.env.PRIVATE_IMAGE;
+
+  // Handle navigation to Login page
+  const handleGoToLogin = () => {
+    router.push('/login');
+  };
+
+  // Handle navigation to Register page
+  const handleGoToRegister = () => {
+    router.push('/register');
+  };
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <div className="min-h-screen bg-gray-900 text-white p-8">
+      <div className="max-w-6xl mx-auto">
+        {/* Header Section */}
+        <header className="text-center mb-12">
+          <h1 className="text-4xl font-bold mb-4">Weather Dashboard Application</h1>
+          <p className="text-lg text-gray-400">
+            Your personal weather assistant, providing real-time weather updates and forecasts.
+          </p>
+          <div className="mt-8 flex justify-center gap-4">
+            <button
+              onClick={handleGoToLogin}
+              className="py-2 px-6 bg-blue-500 rounded-lg hover:bg-blue-600 transition duration-300"
+            >
+              Login
+            </button>
+            <button
+              onClick={handleGoToRegister}
+              className="py-2 px-6 bg-green-500 rounded-lg hover:bg-green-600 transition duration-300"
+            >
+              Register
+            </button>
+          </div>
+        </header>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        {/* Features Section */}
+        <section className="mb-16">
+          <h2 className="text-3xl font-semibold mb-6">Features</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="bg-gray-800 p-6 rounded-lg shadow-lg text-center">
+              <h3 className="text-xl font-bold mb-2">Real-Time Weather</h3>
+              <p>Get up-to-date weather information for any city around the world.</p>
+            </div>
+            <div className="bg-gray-800 p-6 rounded-lg shadow-lg text-center">
+              <h3 className="text-xl font-bold mb-2">Forecast Data</h3>
+              <p>Hourly and 5-day forecasts to help you plan your day better.</p>
+            </div>
+            <div className="bg-gray-800 p-6 rounded-lg shadow-lg text-center">
+              <h3 className="text-xl font-bold mb-2">User Preferences</h3>
+              <p>Customize your weather experience with preferred units for temperature and wind speed.</p>
+            </div>
+          </div>
+        </section>
+
+        {/* About Creator Section */}
+        <section>
+          <h2 className="text-3xl font-semibold mb-6">About the Creator</h2>
+          <div className="flex flex-col md:flex-row items-center gap-8 bg-gray-800 p-6 rounded-lg">
+            {/* Creator Photo */}
+            <div className="w-32 h-32 md:w-48 md:h-48 bg-gray-600 rounded-full overflow-hidden flex items-center justify-center">
+              <img src={privateUrl} alt="Creator Photo" />
+            </div>
+            <div className="text-center md:text-left">
+              <h3 className="text-2xl font-bold mb-2">Krittin Chuaiphikroh</h3>
+              <p className="text-lg">
+                To become a future engineer, you must make sure your weather data is clean and accurate.<br></br>
+                Do not disappoint your god and savior, the great and powerful, REDACTED.
+              </p>
+            </div>
+          </div>
+        </section>
+      </div>
     </div>
   );
-}
+};
+
+export default LandingPage;

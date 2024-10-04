@@ -1,148 +1,145 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
 
-const RegisterPage: React.FC = () => {
+const RegistrationPage: React.FC = () => {
+  const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [preferredTemperature, setPreferredTemperature] = useState(0);
-  const [preferredWindSpeed, setPreferredWindSpeed] = useState(0);
-  const [rememberMe, setRememberMe] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [preferredTemperatureUnit, setPreferredTemperatureUnit] = useState(0);
+  const [preferredWindSpeedUnit, setPreferredWindSpeedUnit] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 
-  const handleRegister = async () => {
+  // Check if user is already logged in
+  useEffect(() => {
+    const checkTokenValidity = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      try {
+        const response = await axios.get(`${backendUrl}/user/`, {
+          headers: { Authorization: `Token ${token}` },
+        });
+        if (response.status === 200) {
+          router.push('/dashboard'); // Redirect to dashboard if token is valid
+        }
+      } catch (error) {
+        console.error("Token is invalid or expired", error);
+        localStorage.removeItem('token'); // Remove invalid token
+      }
+    };
+
+    checkTokenValidity();
+  }, [backendUrl, router]);
+
+  const handleRegistration = async () => {
     setError(null);
+
+    if (!displayName || !email || !password || !confirmPassword) {
+      setError('All fields are required');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters long');
+      return;
+    }
+
     try {
-      const response = await axios.post(`${backendUrl}/register`, {
+      const response = await axios.post(`${backendUrl}/register/`, {
+        display_name: displayName,
         email,
         password,
-        preferred_temperature_unit: preferredTemperature,
-        preferred_wind_speed_unit: preferredWindSpeed,
+        preferred_temperature_unit: preferredTemperatureUnit,
+        preferred_wind_speed_unit: preferredWindSpeedUnit,
       });
-
       if (response.data.success) {
-        alert('Registration successful! Please log in.');
-        router.push('/login');
+        router.push('/login'); // Redirect to login page after successful registration
       } else {
         setError(response.data.message);
       }
     } catch (error) {
-      setError('Registration failed. Please try again.');
+      setError('Failed to register. Please try again.');
     }
   };
 
   return (
-    <div className="flex h-screen">
-      <div className="w-1/2 flex items-center justify-center bg-gray-100">
-        <div className="max-w-md w-full">
-          <img src="/logo.png" alt="Logo" className="mb-4" />
-          <h2 className="text-4xl font-bold text-gray-800 mb-4">Weather App</h2>
-          <p className="text-lg text-gray-600 mb-6">Please enter your information to register!</p>
-          
-          <div className="mb-4">
-            <label className="block text-gray-700">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md"
-              placeholder="johndoe@gmail.com"
-            />
+    <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
+      <div className="bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-md">
+        <h1 className="text-3xl font-bold mb-6 text-center">Register</h1>
+        {error && <p className="text-red-500 mb-4">{error}</p>}
+        <input
+          type="text"
+          placeholder="Display Name"
+          value={displayName}
+          onChange={(e) => setDisplayName(e.target.value)}
+          className="w-full mb-4 px-4 py-2 rounded-lg text-gray-900"
+        />
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full mb-4 px-4 py-2 rounded-lg text-gray-900"
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="w-full mb-4 px-4 py-2 rounded-lg text-gray-900"
+        />
+        <input
+          type="password"
+          placeholder="Password (again)"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          className="w-full mb-4 px-4 py-2 rounded-lg text-gray-900"
+        />
+        <div className="flex gap-4 mb-4">
+          <div>
+            <label className="block mb-2">Preferred Temperature Unit</label>
+            <select
+              value={preferredTemperatureUnit}
+              onChange={(e) => setPreferredTemperatureUnit(parseInt(e.target.value))}
+              className="w-full px-4 py-2 text-gray-900 rounded-lg"
+            >
+              <option value={0}>Celsius</option>
+              <option value={1}>Fahrenheit</option>
+            </select>
           </div>
-          
-          <div className="mb-4">
-            <label className="block text-gray-700">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md"
-            />
+          <div>
+            <label className="block mb-2">Preferred Wind Speed Unit</label>
+            <select
+              value={preferredWindSpeedUnit}
+              onChange={(e) => setPreferredWindSpeedUnit(parseInt(e.target.value))}
+              className="w-full px-4 py-2 text-gray-900 rounded-lg"
+            >
+              <option value={0}>km/h</option>
+              <option value={1}>knots</option>
+            </select>
           </div>
-
-          <div className="mb-4">
-            <label className="block text-gray-700">Preferred Units</label>
-            <div className="flex gap-4">
-              <div>
-                <input
-                  type="radio"
-                  value={0}
-                  checked={preferredWindSpeed === 0}
-                  onChange={() => setPreferredWindSpeed(0)}
-                  className="mr-2"
-                />
-                km/h
-              </div>
-              <div>
-                <input
-                  type="radio"
-                  value={1}
-                  checked={preferredWindSpeed === 1}
-                  onChange={() => setPreferredWindSpeed(1)}
-                  className="mr-2"
-                />
-                knots
-              </div>
-            </div>
-
-            <div className="flex gap-4 mt-4">
-              <div>
-                <input
-                  type="radio"
-                  value={0}
-                  checked={preferredTemperature === 0}
-                  onChange={() => setPreferredTemperature(0)}
-                  className="mr-2"
-                />
-                °C
-              </div>
-              <div>
-                <input
-                  type="radio"
-                  value={1}
-                  checked={preferredTemperature === 1}
-                  onChange={() => setPreferredTemperature(1)}
-                  className="mr-2"
-                />
-                °F
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center mb-4">
-            <input
-              type="checkbox"
-              checked={rememberMe}
-              onChange={() => setRememberMe(!rememberMe)}
-              className="mr-2"
-            />
-            <label className="text-gray-700">Remember Me</label>
-          </div>
-
-          {error && <p className="text-red-500 mb-4">{error}</p>}
-
-          <button
-            onClick={handleRegister}
-            className="w-full py-2 px-4 bg-black text-white rounded-md hover:bg-gray-800 transition duration-300"
-          >
-            Register
-          </button>
-
-          <p className="text-center mt-4">
-            Already have an account? <a href="/login" className="text-blue-600">Login Here.</a>
-          </p>
         </div>
-      </div>
-      <div className="w-1/2 bg-cover bg-center" style={{ backgroundImage: 'url(/path/to/illustration.png)' }}>
-        {/* Illustration Area */}
+        <button
+          onClick={handleRegistration}
+          className="w-full py-2 px-4 bg-blue-500 rounded-lg hover:bg-blue-600 transition duration-300"
+        >
+          Register
+        </button>
       </div>
     </div>
   );
 };
 
-export default RegisterPage;
+export default RegistrationPage;
