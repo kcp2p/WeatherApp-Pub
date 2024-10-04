@@ -1,7 +1,7 @@
 # weather_api/admin.py
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser, LocationHistory, WeatherCache, UserSavedCity, Token, APIRequestLog
+from .models import CustomUser, LocationHistory, WeatherCache, UserSavedCity, APIRequestLog
 
 class CustomUserAdmin(UserAdmin):
     model = CustomUser
@@ -38,7 +38,5 @@ class UserSavedCityAdmin(admin.ModelAdmin):
     list_display = ['user', 'city_name', 'saved_at']
 
 admin.site.register(UserSavedCity, UserSavedCityAdmin)
-
-admin.site.register(Token)
 
 admin.site.register(APIRequestLog)

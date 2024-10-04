@@ -91,12 +91,3 @@ class UserSavedCity(models.Model):
     latitude = models.FloatField()
     longitude = models.FloatField()
     saved_at = models.DateTimeField(auto_now_add=True)
-
-# Token model for authentication
-class Token(models.Model):
-    id = models.AutoField(primary_key=True)
-    token = models.CharField(max_length=255)
-    created_at = models.DateTimeField()
-    user_id = models.IntegerField()
-    expires_at = models.DateTimeField()
-    is_used = models.BooleanField(default=False)

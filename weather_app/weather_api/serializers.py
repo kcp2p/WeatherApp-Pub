@@ -1,6 +1,6 @@
 # weather_api/serializers.py
 from rest_framework import serializers
-from .models import CustomUser, LocationHistory, WeatherCache, UserSavedCity, Token
+from .models import CustomUser, LocationHistory, WeatherCache, UserSavedCity
 
 class CustomUserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=False, min_length=8)
@@ -24,8 +24,3 @@ class UserSavedCitySerializer(serializers.ModelSerializer):
     class Meta:
         model = UserSavedCity
         fields = ['city_name', 'latitude', 'longitude', 'saved_at']
-
-class TokenSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Token
-        fields = ["token", "created_at", "expires_at", "user_id", "is_used"]
