@@ -1,6 +1,6 @@
 # weather_api/serializers.py
 from rest_framework import serializers
-from .models import CustomUser, LocationHistory, WeatherCache, UserSavedCity
+from .models import CustomUser, LocationHistory, WeatherCache
 
 class CustomUserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=False, min_length=8)
@@ -19,8 +19,3 @@ class WeatherCacheSerializer(serializers.ModelSerializer):
     class Meta:
         model = WeatherCache
         fields = ['city_name', 'latitude', 'longitude', 'temperature', 'humidity', 'wind_speed', 'forecast_data', 'cached_at', 'expiry_time']
-
-class UserSavedCitySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = UserSavedCity
-        fields = ['city_name', 'latitude', 'longitude', 'saved_at']

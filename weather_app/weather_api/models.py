@@ -83,11 +83,3 @@ class APIRequestLog(models.Model):
     response_status = models.IntegerField()
     response_data = models.JSONField()
     request_time = models.DateTimeField(auto_now_add=True)
-
-# User Save City to show on dashboard
-class UserSavedCity(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    city_name = models.CharField(max_length=100)
-    latitude = models.FloatField()
-    longitude = models.FloatField()
-    saved_at = models.DateTimeField(auto_now_add=True)

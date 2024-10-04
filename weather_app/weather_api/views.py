@@ -200,7 +200,6 @@ def get_api_logs(request):
         'request_time': log.request_time,
         'request_url': log.request_url,
         'response_status': log.response_status,
-        'response_data': log.response_data,
     } for log in api_logs])
 
 @api_view(['GET'])
