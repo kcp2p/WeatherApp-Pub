@@ -1,4 +1,29 @@
 services:
+  traefik:
+    image: traefik:3.2
+    restart: always
+    ports:
+      - 80:80
+      - 443:443
+    networks:
+      - ingress-network
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik/traefik.yaml:/etc/traefik/traefik.yaml:ro
+      - ./traefik/dynamic.yaml:/etc/traefik/dynamic.yaml:ro
+      - ./traefik/acme.json:/etc/traefik/acme.json
+    labels:
+      - traefik.enable=true
+      - traefik.http.middlewares.traefik-auth.basicauth.removeheader=true
+      - traefik.http.middlewares.traefik-auth.basicauth.users=${TRAEFIK_ADMIN_PASSWD}
+      - traefik.http.routers.traefik.rule=Host(`traefik.aloftec.com`)
+      - traefik.http.routers.traefik.service=api@internal
+      - traefik.http.routers.traefik.tls.certresolver=tlschallenge
+      - traefik.http.routers.traefik.entrypoints=web-secure
+      - traefik.http.routers.traefik.middlewares=traefik-auth, secHeaders@file, autodetectContenttype@file
+      - traefik.http.services.traefik.loadbalancer.server.port=8080
+    env_file:
+      - ./.env
   db:
     image: postgres:16.4-alpine
     ports:
@@ -14,6 +39,43 @@ services:
     networks:
       - api-network
 
+  weather-frontend:
+    build: ./weather_front
+    restart: always
+    networks:
+      - ingress-network
+      - api-network
+    depends_on:
+      - weather-backend
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.frontend.rule=Host(`weather.aloftec.com`)
+      - traefik.http.routers.frontend.entrypoints=web-secure
+      - traefik.http.services.frontend.loadbalancer.server.port=80
+      - traefik.http.routers.frontend.service=frontend
+      - traefik.http.routers.frontend.tls.certresolver=tlschallenge
+    env_file:
+      - ./weather_front/.env.local
+
+  weather-backend:
+    build:
+      context: ./weather_app
+    command: gunicorn weather_app.wsgi:application --bind 0.0.0.0:8000
+    restart: always
+    networks:
+      - ingress-network
+      - api-network
+    depends_on:
+      - db
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.backend.rule=Host(`weather-backend.aloftec.com`)
+      - traefik.http.routers.backend.entrypoints=web-secure
+      - traefik.http.services.backend.loadbalancer.server.port=8000
+      - traefik.http.routers.backend.service=backend
+      - traefik.http.routers.backend.tls.certresolver=tlschallenge
+    env_file:
+      - ./.env
 networks:
   ingress-network:
     external: true

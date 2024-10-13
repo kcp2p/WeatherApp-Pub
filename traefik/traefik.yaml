@@ -1,0 +1,35 @@
+log:
+  level: DEBUG  # ERROR, DEBUG, PANIC, FATAL, ERROR, WARN, INFO
+providers:
+  docker:
+    exposedByDefault: false
+    endpoint: 'unix:///var/run/docker.sock'
+    network: ingress-network
+  file:
+    filename: /etc/traefik/dynamic.yaml
+    watch: true
+api:
+  dashboard: true
+entryPoints:
+  web:
+    address: ':80'
+    http:
+      redirections:
+        entryPoint:
+          to: web-secure
+          scheme: https 
+  web-secure:
+    http3:
+      advertisedPort: 443
+    address: ':443'
+certificatesResolvers:
+  tlschallenge:
+    acme:
+      caServer: https://acme-v02.api.letsencrypt.org/directory
+      email: krittin.ch@kmitl.ac.th
+      storage: /etc/traefik/acme.json
+      keyType: RSA4096
+      tlsChallenge: {}
+global:
+  checkNewVersion: true
+  sendAnonymousUsage: false
