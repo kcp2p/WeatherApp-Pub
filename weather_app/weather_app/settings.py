@@ -157,12 +157,9 @@ SPECTACULAR_SETTINGS = {
 OPENWEATHER_API_KEY = os.environ.get('OPENWEATHER_API_KEY')
 BACKEND_URL = os.environ.get('BACKEND_URL')
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "https://weather.aloftec.com",
-    "https://weather-backend.aloftec.com",
-]
+CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS').split(" ")
 
 CORS_ALLOW_CREDENTIALS = True
 TIME_ZONE = os.environ.get('TIME_ZONE')
+
+CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS').split(" ")
