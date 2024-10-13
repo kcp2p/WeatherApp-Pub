@@ -41,7 +41,7 @@ const DashboardPage: React.FC = () => {
       setSearchHistory(response.data);
     } catch (error) {
       console.error("Failed to fetch search history", error);
-      if (error.response && error.response.status === 401) {
+      if ((error as any).response && (error as any).response.status === 401) {
         // Redirect to login if unauthorized
         router.push('/login');
       }
@@ -68,7 +68,7 @@ const DashboardPage: React.FC = () => {
       }
     } catch (error) {
       console.error("Failed to fetch user preferences", error);
-      if (error.response && error.response.status === 401) {
+      if ((error as any).response && (error as any).response.status === 401) {
         router.push('/login');
       }
     }
@@ -106,7 +106,7 @@ const DashboardPage: React.FC = () => {
       await fetchSearchHistory();
     } catch (error) {
       setError('Unable to fetch weather data. Please try again.');
-      if (error.response && error.response.status === 401) {
+      if ((error as any).response && (error as any).response.status === 401) {
         router.push('/login');
       }
     } finally {
@@ -185,7 +185,7 @@ const DashboardPage: React.FC = () => {
       await fetchSearchHistory();
     } catch (error) {
       console.error("Failed to delete search history", error);
-      if (error.response && error.response.status === 401) {
+      if ((error as any).response && (error as any).response.status === 401) {
         // Redirect to login if unauthorized
         router.push('/login');
       }
@@ -345,7 +345,7 @@ const DashboardPage: React.FC = () => {
                     const dayIndex = weatherData.forecast_data.time.findIndex((time: string) => new Date(time).toDateString() === dateString);
                     return (
                       <div key={index} className="bg-gray-700 p-4 rounded-lg text-center">
-                        <p className="font-bold">{dateString}</p>
+                        <p className="font-bold">{dateString as React.ReactNode}</p>
                         <p>
                           {convertTemperature(weatherData.forecast_data.temperature_2m[dayIndex])}°
                           {userPreferences?.preferred_temperature_unit === 1 ? 'F' : 'C'}

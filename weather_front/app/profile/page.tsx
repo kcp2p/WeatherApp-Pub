@@ -74,8 +74,8 @@ const ProfilePage: React.FC = () => {
       setMessage("Profile updated successfully");
     } catch (error) {
       console.error("Failed to update profile", error);
-      if (error.response && error.response.data.error) {
-        setMessage(error.response.data.error);
+      if ((error as any).response && (error as any).response.data.error) {
+        setMessage((error as any).response.data.error);
       } else {
         setMessage("Failed to update profile. Please try again.");
       }
