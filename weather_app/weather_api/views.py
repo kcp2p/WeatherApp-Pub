@@ -181,13 +181,6 @@ def delete_all_city_cache(request, city_name):
 
     return Response({'message': f'Cache for {city_name} cleared'})
 
-# View to get the location history of the user
-@api_view(['GET'])
-def get_location_history(request):
-    user = request.user
-    location_history = LocationHistory.objects.filter(user=user).order_by('-search_time')
-    return Response([{'city_name': loc.city_name, 'search_time': loc.search_time} for loc in location_history])
-
 # View to get the API logs
 @api_view(['GET'])
 @permission_classes([IsAdminUser])

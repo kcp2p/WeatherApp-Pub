@@ -15,7 +15,6 @@ urlpatterns = [
     path("register/", views.registration, name="register"),
     path('token/', auth_views.obtain_auth_token, name='token'),
     path('weather/<str:city_name>', views.get_weather, name='get_weather'),
-    path('location-history/', views.get_location_history, name='get_location_history'),
     path('search-history/', views.get_user_search_history, name='user-search-history'),
     path('search-history/<int:id>', views.delete_search_history, name='delete-search-history'),
     path('gdpr/', views.delete_user_account, name='gdpr-deletion'),
